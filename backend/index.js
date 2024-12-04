@@ -33,26 +33,29 @@ pool.connect((err) => {
 // index.js
 
 app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
-    console.log('Login attempt:', username); // Log the username attempting to log in
-  
-    try {
-      const query = 'SELECT * FROM Users WHERE USERNAME = $1 AND PASSWORD = $2';
-      const values = [username, password];
-  
-      const result = await pool.query(query, values);
-      console.log('Query result:', result.rows); // Log the query result
-  
-      if (result.rows.length > 0) {
-        res.json({ success: true, userId: result.rows[0].userid });
-      } else {
-        res.json({ success: false, message: 'Invalid credentials' });
-      }
-    } catch (err) {
-      console.error('Error during login:', err); // Log detailed error
-      res.status(500).json({ success: false, message: 'Server error', error: err.message });
+  const { username, password } = req.body;
+
+  try {
+    const query = 'SELECT * FROM Users WHERE USERNAME = $1 AND PASSWORD = $2';
+    const values = [username, password];
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      res.json({
+        success: true,
+        userId: user.userid,
+        username: user.username, // Return the username
+      });
+    } else {
+      res.json({ success: false, message: 'Invalid credentials' });
     }
-  });
+  } catch (err) {
+    console.error('Error during login:', err);
+    res.status(500).json({ success: false, message: 'Server error', error: err.message });
+  }
+});
   
 
 // Get Restaurants Based on Filters

@@ -3,8 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { 
+  Button, 
+  Card, 
+  Container, 
+  Row, 
+  Col, 
+  Form, 
+  Navbar, 
+  Nav 
+} from 'react-bootstrap';
+import { HeartFill, Heart } from 'react-bootstrap-icons';
 
-function Dashboard({ userId, logout }) {
+function Dashboard({ userId, username, logout }) {
   const [restaurants, setRestaurants] = useState([]);
   const [favorites, setFavorites] = useState(new Set());
   const navigate = useNavigate();
@@ -12,15 +23,16 @@ function Dashboard({ userId, logout }) {
   const [filters, setFilters] = useState({
     searchQuery: '',
     priceRange: '',
-    // Add other filters as needed
   });
 
   useEffect(() => {
     fetchRestaurants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   useEffect(() => {
     fetchFavorites();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchRestaurants = async () => {
@@ -82,70 +94,116 @@ function Dashboard({ userId, logout }) {
     });
   };
 
+  const priceRanges = ['$', '$$', '$$$', '$$$$'];
+  console.log('Dashboard received username:', username);
   return (
     <div>
-      <h2>Welcome, User {userId}</h2>
-      {/* Logout and View Favorites Buttons */}
-      <button onClick={logout}>Logout</button>
-      <button onClick={() => navigate('/favorites')}>View Favorites</button>
-      {/* Filters and Search */}
-      <div>
-        <h3>Filters</h3>
-        {/* General Search Bar */}
-        <label>Search:</label>
-        <input
-          type="text"
-          name="searchQuery"
-          value={filters.searchQuery}
-          onChange={handleFilterChange}
-          placeholder="Search by restaurant or menu item..."
-        />
-        {/* Price Range Filter */}
-        <label>Price Range:</label>
-        <input
-          type="text"
-          name="priceRange"
-          value={filters.priceRange}
-          onChange={handleFilterChange}
-          placeholder="e.g., $, $$, $$$"
-        />
-        {/* Add more filter inputs if needed */}
-      </div>
-      {/* Restaurant List */}
-      <div>
-        <h3>Restaurants</h3>
-        {restaurants.length > 0 ? (
-          <ul>
-            {restaurants.map((restaurant) => (
-              <li key={restaurant.restaurantid}>
-                <strong>{restaurant.rname}</strong> - {restaurant.cuisinename} - {restaurant.pricerange}
-                <br />
-                Atmosphere: {restaurant.atmosphere}
-                <br />
-                Rating: {restaurant.averagerating}
-                <br />
-                Address: {restaurant.address}
-                <br />
-                Website:{' '}
-                <a
-                  href={ensureHttp(restaurant.websitelink)}
-                  target="_blank"
-                  rel="noopener noreferrer"
+      {/* Navigation Bar */}
+      <Navbar bg="dark" variant="dark" expand="lg">
+        <Container>
+          <Navbar.Brand>Restaurant Finder</Navbar.Brand>
+          <Nav className="ml-auto">
+            <Button
+              variant="outline-light"
+              onClick={() => navigate('/favorites')}
+              className="mr-2"
+            >
+              Favorites
+            </Button>
+            <Button variant="outline-light" onClick={logout}>
+              Logout
+            </Button>
+          </Nav>
+        </Container>
+      </Navbar>
+
+      {/* Main Content */}
+      <Container className="mt-4">
+        {/* Welcome Message */}
+        <h2 className="mb-4 text-center">Welcome, {username}</h2>
+
+        {/* Filters */}
+        <Form className="mb-4">
+          <Row className="justify-content-center">
+            <Col md={6}>
+              <Form.Group controlId="searchQuery">
+                <Form.Control
+                  type="text"
+                  name="searchQuery"
+                  value={filters.searchQuery}
+                  onChange={handleFilterChange}
+                  placeholder="Search by restaurant or menu item..."
+                />
+              </Form.Group>
+            </Col>
+            <Col md={3}>
+              <Form.Group controlId="priceRange">
+                <Form.Control
+                  as="select"
+                  name="priceRange"
+                  value={filters.priceRange}
+                  onChange={handleFilterChange}
                 >
-                  {restaurant.websitelink}
-                </a>
-                <br />
-                {/* Favorite Button */}
-                <button onClick={() => toggleFavorite(restaurant.restaurantid)}>
-                  {favorites.has(restaurant.restaurantid) ? 'Unfavorite' : 'Favorite'}
-                </button>
-              </li>
+                  <option value="">Select Price Range</option>
+                  {priceRanges.map((range) => (
+                    <option key={range} value={range}>
+                      {range}
+                    </option>
+                  ))}
+                </Form.Control>
+              </Form.Group>
+            </Col>
+          </Row>
+        </Form>
+
+        {/* Restaurant Listings */}
+        {restaurants.length > 0 ? (
+          <Row>
+            {restaurants.map((restaurant) => (
+              <Col md={4} key={restaurant.restaurantid} className="mb-4">
+                <Card>
+                  <Card.Body>
+                    <Card.Title className="d-flex justify-content-between align-items-center">
+                      {restaurant.rname}
+                      <Button
+                        variant="link"
+                        onClick={() => toggleFavorite(restaurant.restaurantid)}
+                      >
+                        {favorites.has(restaurant.restaurantid) ? (
+                          <HeartFill color="red" size={24} />
+                        ) : (
+                          <Heart color="black" size={24} />
+                        )}
+                      </Button>
+                    </Card.Title>
+                    <Card.Subtitle className="mb-2 text-muted">
+                      {restaurant.cuisinename} - {restaurant.pricerange}
+                    </Card.Subtitle>
+                    <Card.Text>
+                      <strong>Atmosphere:</strong> {restaurant.atmosphere}
+                      <br />
+                      <strong>Rating:</strong> {restaurant.averagerating}
+                      <br />
+                      <strong>Address:</strong> {restaurant.address}
+                      <br />
+                      <strong>Website:</strong>{' '}
+                      <a
+                        href={ensureHttp(restaurant.websitelink)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {restaurant.websitelink}
+                      </a>
+                    </Card.Text>
+                  </Card.Body>
+                </Card>
+              </Col>
             ))}
-          </ul>
+          </Row>
         ) : (
           <p>No restaurants found.</p>
         )}
-      </div>
+      </Container>
     </div>
   );
 }
